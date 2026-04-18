@@ -123,7 +123,7 @@ defmodule CaravelaDemoWeb.GeneratorRunner do
   end
 
   defp run(%{id: "live"} = meta, %Domain{} = domain) do
-    live_files = LiveView.render_all(domain)
+    live_files = LiveView.render_all(domain, with_domain: true)
     svelte_files = Svelte.render_all(domain)
     put_files(meta, normalize_files(live_files ++ svelte_files))
   end
@@ -135,7 +135,7 @@ defmodule CaravelaDemoWeb.GeneratorRunner do
       |> Kernel.++([Context.render(domain)])
       |> Kernel.++(Controller.render_all(domain))
       |> Kernel.++(GraphQL.render_all(domain))
-      |> Kernel.++(LiveView.render_all(domain))
+      |> Kernel.++(LiveView.render_all(domain, with_domain: true))
       |> Kernel.++(Svelte.render_all(domain))
       |> normalize_files()
 

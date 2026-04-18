@@ -14,6 +14,7 @@
     form = undefined,
     liveRuntime = undefined,
     variants = [],
+    crud = undefined,
     live = undefined,
   } = $props();
 
@@ -42,6 +43,7 @@
         {form}
         {liveRuntime}
         {variants}
+        {crud}
       />
     </main>
   </div>

@@ -193,48 +193,17 @@ defmodule CaravelaDemo.Library do
     CaravelaDemo.Domains.Library.__caravela_permission__(:can_read, entity, query, context)
   end
 
-  defp authorize_create(entity, context) do
-    case CaravelaDemo.Domains.Library.__caravela_permission__(:can_create, entity, context) do
-      true -> :ok
-      false -> {:error, :unauthorized}
-    end
-  end
+  defp authorize_create(_entity, _context), do: :ok
 
-  defp authorize_update(entity, struct, context) do
-    case CaravelaDemo.Domains.Library.__caravela_permission__(
-           :can_update,
-           entity,
-           struct,
-           context
-         ) do
-      true -> :ok
-      false -> {:error, :unauthorized}
-    end
-  end
+  defp authorize_update(_entity, _struct, _context), do: :ok
 
-  defp authorize_delete(entity, struct, context) do
-    case CaravelaDemo.Domains.Library.__caravela_permission__(
-           :can_delete,
-           entity,
-           struct,
-           context
-         ) do
-      true -> :ok
-      false -> {:error, :unauthorized}
-    end
-  end
+  defp authorize_delete(_entity, _struct, _context), do: :ok
 
   defp apply_changeset_hook(changeset, action, entity, context) do
     CaravelaDemo.Domains.Library.__caravela_hook__(action, entity, changeset, context)
   end
 
-  defp run_delete_hook(entity, struct, context) do
-    case CaravelaDemo.Domains.Library.__caravela_hook__(:on_delete, entity, struct, context) do
-      :ok -> :ok
-      {:error, _} = err -> err
-      other -> raise "on_delete hook must return :ok or {:error, reason}, got: " <> inspect(other)
-    end
-  end
+  defp run_delete_hook(_entity, _struct, _context), do: :ok
 
   # --- Internal: multi-tenant scoping --------------------------------------
 

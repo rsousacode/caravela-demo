@@ -14,6 +14,7 @@ defmodule CaravelaDemoWeb.CommandCenterLive do
   alias CaravelaDemo.FlowController
   alias CaravelaDemo.Flows, as: FlowCatalog
   alias CaravelaDemoWeb.{
+    CrudPanel,
     DomainSerializer,
     FlowSerializer,
     FormPanel,
@@ -40,6 +41,7 @@ defmodule CaravelaDemoWeb.CommandCenterLive do
       |> assign(:form, FormPanel.initial())
       |> assign(:live_runtime, LiveRuntimePanel.initial())
       |> assign(:variants, VariantRunner.all())
+      |> assign(:crud, CrudPanel.initial())
 
     socket =
       if connected?(socket) do
@@ -201,7 +203,8 @@ defmodule CaravelaDemoWeb.CommandCenterLive do
           flowSnapshot: @flow_snapshot,
           form: @form,
           liveRuntime: @live_runtime,
-          variants: @variants
+          variants: @variants,
+          crud: @crud
         }
       }
       socket={@socket}

@@ -45,7 +45,7 @@ export const PANELS = [
     hint: "Generated LiveViews",
     glyph: "▦",
     accent: "wave-300",
-    status: "soon",
+    status: "live",
   },
   {
     id: "tenancy",

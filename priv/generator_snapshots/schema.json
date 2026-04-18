@@ -26,5 +26,5 @@
       "content": "defmodule Caravela.Migrations.Library.Create do\n  use Ecto.Migration\n\n  def change do\n    create table(:library_publishers, primary_key: false) do\n      add :id, :binary_id, primary_key: true\n      add :name, :string, null: false\n      add :country, :string\n\n      timestamps(type: :utc_datetime)\n    end\n\n    create table(:library_authors, primary_key: false) do\n      add :id, :binary_id, primary_key: true\n      add :name, :string, null: false\n      add :bio, :text\n      add :born, :date\n\n      timestamps(type: :utc_datetime)\n    end\n\n    create table(:library_books, primary_key: false) do\n      add :id, :binary_id, primary_key: true\n      add :title, :string, null: false\n      add :isbn, :string\n      add :published, :boolean, default: false\n      add :price, :decimal, precision: 10, scale: 2\n      add :author_id, references(:library_authors, type: :binary_id, on_delete: :nilify_all)\n\n      add :publisher_id, references(:library_publishers, type: :binary_id, on_delete: :nilify_all)\n\n      timestamps(type: :utc_datetime)\n    end\n\n    create index(:library_books, [:author_id])\n    create index(:library_books, [:publisher_id])\n  end\nend\n"
     }
   ],
-  "captured_at": "2026-04-18T05:50:25.262139Z"
+  "captured_at": "2026-04-18T14:12:51.418571Z"
 }

@@ -2,10 +2,11 @@ defmodule CaravelaDemo.FlowController do
   @moduledoc """
   Orchestrates demo flow lifecycle on behalf of LiveView subscribers.
 
-  Each runner is told to notify a tiny per-flow forwarder process,
-  which re-emits every message to this GenServer tagged with the
-  flow id. That way we can fan out `{:flow_update, flow_id, _}`
-  events to subscribers without having to guess who sent what.
+  Each runner is started with `Caravela.Flow.start(..., notify: self(),
+  tag: flow_id)`, so every notification arrives as
+  `{:caravela_flow, flow_id, msg}` — no forwarder processes needed.
+  The controller fans these out to subscribers as
+  `{:flow_update, flow_id, event}`.
 
   Flows survive LiveView navigation and page reload — subscribers
   can reattach by calling `subscribe/1`. The controller monitors
@@ -58,7 +59,7 @@ defmodule CaravelaDemo.FlowController do
 
     {:ok,
      %{
-       # flow_id => %{pid, forwarder, started_at, state, status}
+       # flow_id => %{pid, started_at, state, status}
        runners: %{},
        # flow_id => [subscriber_pid]
        subs: %{},
@@ -76,10 +77,7 @@ defmodule CaravelaDemo.FlowController do
       entry ->
         state = terminate_existing(state, flow_id)
 
-        controller = self()
-        forwarder = spawn(fn -> forward_loop(controller, flow_id) end)
-
-        case Flow.start(entry.module, entry.flow_name, notify: forwarder) do
+        case Flow.start(entry.module, entry.flow_name, notify: self(), tag: flow_id) do
           {:ok, pid} ->
             ref = Process.monitor(pid)
             started_at = System.system_time(:millisecond)
@@ -87,7 +85,6 @@ defmodule CaravelaDemo.FlowController do
 
             runner = %{
               pid: pid,
-              forwarder: forwarder,
               started_at: started_at,
               state: initial_state,
               status: :running
@@ -104,7 +101,6 @@ defmodule CaravelaDemo.FlowController do
             {:reply, {:ok, pid}, state}
 
           {:error, reason} ->
-            if Process.alive?(forwarder), do: Process.exit(forwarder, :kill)
             {:reply, {:error, reason}, state}
         end
     end
@@ -176,10 +172,10 @@ defmodule CaravelaDemo.FlowController do
     {:noreply, state}
   end
 
-  # --- Forwarder-tagged notifications ----------------------------------
+  # --- Tagged runner notifications -------------------------------------
 
   @impl true
-  def handle_info({:from_flow, flow_id, {:flow_state, new_state}}, state) do
+  def handle_info({:caravela_flow, flow_id, {:flow_state, new_state}}, state) do
     case Map.fetch(state.runners, flow_id) do
       {:ok, _} ->
         state = update_in(state, [:runners, flow_id], &%{&1 | state: new_state})
@@ -192,7 +188,7 @@ defmodule CaravelaDemo.FlowController do
   end
 
   @impl true
-  def handle_info({:from_flow, flow_id, {:flow_done, final_state}}, state) do
+  def handle_info({:caravela_flow, flow_id, {:flow_done, final_state}}, state) do
     case Map.fetch(state.runners, flow_id) do
       {:ok, _} ->
         state =
@@ -207,7 +203,7 @@ defmodule CaravelaDemo.FlowController do
   end
 
   @impl true
-  def handle_info({:from_flow, flow_id, {:flow_error, reason}}, state) do
+  def handle_info({:caravela_flow, flow_id, {:flow_error, reason}}, state) do
     case Map.fetch(state.runners, flow_id) do
       {:ok, _} ->
         state = update_in(state, [:runners, flow_id], &%{&1 | status: :error})
@@ -243,8 +239,7 @@ defmodule CaravelaDemo.FlowController do
           nil ->
             {:noreply, state}
 
-          runner ->
-            if Process.alive?(runner.forwarder), do: send(runner.forwarder, :stop)
+          _runner ->
             runners = Map.delete(state.runners, flow_id)
             broadcast(flow_id, state, {:terminated, %{reason: inspect(reason)}})
             {:noreply, %{state | runners: runners}}
@@ -252,9 +247,6 @@ defmodule CaravelaDemo.FlowController do
     end
   end
 
-  # With trap_exit on, linked process exits arrive here instead of
-  # killing us. A :normal {:EXIT, _, :normal} is harmless; anything
-  # else we log but swallow.
   @impl true
   def handle_info({:EXIT, _pid, :normal}, state), do: {:noreply, state}
 
@@ -299,20 +291,4 @@ defmodule CaravelaDemo.FlowController do
   defp envelope_for({:done, final_state}), do: %{kind: "done", payload: %{state: final_state}}
   defp envelope_for({:error, reason}), do: %{kind: "error", payload: %{reason: reason}}
   defp envelope_for({:terminated, payload}), do: %{kind: "terminated", payload: payload}
-
-  # Per-flow tagger that re-emits runner notifications with the flow id.
-  # Exits normally on `:stop` — because Erlang's selective receive
-  # scans the mailbox in FIFO order, any `{:flow_state, _}` /
-  # `{:flow_done, _}` messages already queued ahead of `:stop` are
-  # forwarded first, guaranteeing no telemetry is lost on shutdown.
-  defp forward_loop(controller, flow_id) do
-    receive do
-      :stop ->
-        :ok
-
-      msg ->
-        send(controller, {:from_flow, flow_id, msg})
-        forward_loop(controller, flow_id)
-    end
-  end
 end

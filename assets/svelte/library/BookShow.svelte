@@ -2,10 +2,15 @@
 <script lang="ts">
   import type { Book } from '../types/library';
 
-  export let book: Book;
-  export let flash_message: string | null = null;
-
-  export let pushEvent: (event: string, payload: object) => void;
+  let {
+    book,
+    flash_message = null,
+    pushEvent
+  }: {
+    book: Book;
+    flash_message?: string | null;
+    pushEvent: (event: string, payload: object) => void;
+  } = $props();
 </script>
 
 {#if flash_message}
@@ -25,8 +30,8 @@
   </dl>
 
   <div class="actions">
-    <button on:click={() => pushEvent('edit', { id: book.id })}>Edit</button>
-    <button on:click={() => pushEvent('back', {})}>Back</button>
+    <button onclick={() => pushEvent('edit', { id: book.id })}>Edit</button>
+    <button onclick={() => pushEvent('back', {})}>Back</button>
   </div>
 </article>
 

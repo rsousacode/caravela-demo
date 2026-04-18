@@ -2,28 +2,35 @@
 <script lang="ts">
   import type { Author } from '../types/library';
 
-  export let author: Partial<Author> = {};
-  export let errors: Record<string, string[]> = {};
-  export let saving: boolean = false;
-
-  export let pushEvent: (event: string, payload: object) => void;
+  let {
+    author = {},
+    errors = {},
+    saving = false,
+    pushEvent
+  }: {
+    author?: Partial<Author>;
+    errors?: Record<string, string[]>;
+    saving?: boolean;
+    pushEvent: (event: string, payload: object) => void;
+  } = $props();
 
   function handleChange(field: string, value: unknown) {
     pushEvent('validate', { field, value });
   }
 
-  function handleSubmit() {
+  function handleSubmit(e: Event) {
+    e.preventDefault();
     pushEvent('save', {});
   }
 </script>
 
-<form on:submit|preventDefault={handleSubmit}>
+<form onsubmit={handleSubmit}>
   <label>
     Name *
     <input
     type="text"
     value={author.name ?? ''}
-    on:input={(e) => handleChange('name', e.currentTarget.value)}
+    oninput={(e) => handleChange('name', e.currentTarget.value)}
   />
     {#if errors.name}
       <span class="error">{errors.name.join(', ')}</span>
@@ -34,7 +41,7 @@
     Bio
     <textarea
     value={author.bio ?? ''}
-    on:input={(e) => handleChange('bio', e.currentTarget.value)}
+    oninput={(e) => handleChange('bio', e.currentTarget.value)}
   />
     {#if errors.bio}
       <span class="error">{errors.bio.join(', ')}</span>
@@ -46,7 +53,7 @@
     <input
     type="date"
     value={author.born ?? ''}
-    on:input={(e) => handleChange('born', e.currentTarget.value)}
+    oninput={(e) => handleChange('born', e.currentTarget.value)}
   />
     {#if errors.born}
       <span class="error">{errors.born.join(', ')}</span>
@@ -57,7 +64,7 @@
     <button type="submit" disabled={saving}>
       {saving ? 'Saving…' : 'Save'}
     </button>
-    <button type="button" on:click={() => pushEvent('cancel', {})} disabled={saving}>
+    <button type="button" onclick={() => pushEvent('cancel', {})} disabled={saving}>
       Cancel
     </button>
   </div>

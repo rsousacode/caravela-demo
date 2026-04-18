@@ -2,28 +2,35 @@
 <script lang="ts">
   import type { Publisher } from '../types/library';
 
-  export let publisher: Partial<Publisher> = {};
-  export let errors: Record<string, string[]> = {};
-  export let saving: boolean = false;
-
-  export let pushEvent: (event: string, payload: object) => void;
+  let {
+    publisher = {},
+    errors = {},
+    saving = false,
+    pushEvent
+  }: {
+    publisher?: Partial<Publisher>;
+    errors?: Record<string, string[]>;
+    saving?: boolean;
+    pushEvent: (event: string, payload: object) => void;
+  } = $props();
 
   function handleChange(field: string, value: unknown) {
     pushEvent('validate', { field, value });
   }
 
-  function handleSubmit() {
+  function handleSubmit(e: Event) {
+    e.preventDefault();
     pushEvent('save', {});
   }
 </script>
 
-<form on:submit|preventDefault={handleSubmit}>
+<form onsubmit={handleSubmit}>
   <label>
     Name *
     <input
     type="text"
     value={publisher.name ?? ''}
-    on:input={(e) => handleChange('name', e.currentTarget.value)}
+    oninput={(e) => handleChange('name', e.currentTarget.value)}
   />
     {#if errors.name}
       <span class="error">{errors.name.join(', ')}</span>
@@ -35,7 +42,7 @@
     <input
     type="text"
     value={publisher.country ?? ''}
-    on:input={(e) => handleChange('country', e.currentTarget.value)}
+    oninput={(e) => handleChange('country', e.currentTarget.value)}
   />
     {#if errors.country}
       <span class="error">{errors.country.join(', ')}</span>
@@ -46,7 +53,7 @@
     <button type="submit" disabled={saving}>
       {saving ? 'Saving…' : 'Save'}
     </button>
-    <button type="button" on:click={() => pushEvent('cancel', {})} disabled={saving}>
+    <button type="button" onclick={() => pushEvent('cancel', {})} disabled={saving}>
       Cancel
     </button>
   </div>

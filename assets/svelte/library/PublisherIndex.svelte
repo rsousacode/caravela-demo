@@ -2,13 +2,19 @@
 <script lang="ts">
   import type { Publisher } from '../types/library';
 
-  // Props pushed from LiveView via LiveSvelte
-  export let publishers: Publisher[] = [];
-  export let loading: boolean = false;
-  export let flash_message: string | null = null;
-
-  // Dispatch events back to LiveView
-  export let pushEvent: (event: string, payload: object) => void;
+  // Props pushed from LiveView via LiveSvelte.
+  // `pushEvent` dispatches events back to LiveView.
+  let {
+    publishers = [],
+    loading = false,
+    flash_message = null,
+    pushEvent
+  }: {
+    publishers?: Publisher[];
+    loading?: boolean;
+    flash_message?: string | null;
+    pushEvent: (event: string, payload: object) => void;
+  } = $props();
 
   function handleDelete(id: string) {
     if (confirm('Delete this publisher?')) {
@@ -22,7 +28,7 @@
 {/if}
 
 <div class="toolbar">
-  <button on:click={() => pushEvent('new', {})}>New publisher</button>
+  <button onclick={() => pushEvent('new', {})}>New publisher</button>
 </div>
 
 {#if loading}
@@ -44,8 +50,8 @@
           <td>{publisher.name ?? '—'}</td>
           <td>{publisher.country ?? '—'}</td>
           <td>
-            <button on:click={() => pushEvent('edit', { id: publisher.id })}>Edit</button>
-            <button on:click={() => handleDelete(publisher.id)}>Delete</button>
+            <button onclick={() => pushEvent('edit', { id: publisher.id })}>Edit</button>
+            <button onclick={() => handleDelete(publisher.id)}>Delete</button>
           </td>
         </tr>
       {/each}

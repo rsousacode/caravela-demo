@@ -2,28 +2,35 @@
 <script lang="ts">
   import type { Book } from '../types/library';
 
-  export let book: Partial<Book> = {};
-  export let errors: Record<string, string[]> = {};
-  export let saving: boolean = false;
-
-  export let pushEvent: (event: string, payload: object) => void;
+  let {
+    book = {},
+    errors = {},
+    saving = false,
+    pushEvent
+  }: {
+    book?: Partial<Book>;
+    errors?: Record<string, string[]>;
+    saving?: boolean;
+    pushEvent: (event: string, payload: object) => void;
+  } = $props();
 
   function handleChange(field: string, value: unknown) {
     pushEvent('validate', { field, value });
   }
 
-  function handleSubmit() {
+  function handleSubmit(e: Event) {
+    e.preventDefault();
     pushEvent('save', {});
   }
 </script>
 
-<form on:submit|preventDefault={handleSubmit}>
+<form onsubmit={handleSubmit}>
   <label>
     Title *
     <input
     type="text"
     value={book.title ?? ''}
-    on:input={(e) => handleChange('title', e.currentTarget.value)}
+    oninput={(e) => handleChange('title', e.currentTarget.value)}
   />
     {#if errors.title}
       <span class="error">{errors.title.join(', ')}</span>
@@ -35,7 +42,7 @@
     <input
     type="text"
     value={book.isbn ?? ''}
-    on:input={(e) => handleChange('isbn', e.currentTarget.value)}
+    oninput={(e) => handleChange('isbn', e.currentTarget.value)}
   />
     {#if errors.isbn}
       <span class="error">{errors.isbn.join(', ')}</span>
@@ -47,7 +54,7 @@
     <input
     type="checkbox"
     checked={book.published ?? false}
-    on:change={(e) => handleChange('published', e.currentTarget.checked)}
+    onchange={(e) => handleChange('published', e.currentTarget.checked)}
   />
     {#if errors.published}
       <span class="error">{errors.published.join(', ')}</span>
@@ -59,7 +66,7 @@
     <input
     type="number"
     value={book.price ?? ''}
-    on:input={(e) => handleChange('price', e.currentTarget.value)}
+    oninput={(e) => handleChange('price', e.currentTarget.value)}
   />
     {#if errors.price}
       <span class="error">{errors.price.join(', ')}</span>
@@ -70,7 +77,7 @@
     <button type="submit" disabled={saving}>
       {saving ? 'Saving…' : 'Save'}
     </button>
-    <button type="button" on:click={() => pushEvent('cancel', {})} disabled={saving}>
+    <button type="button" onclick={() => pushEvent('cancel', {})} disabled={saving}>
       Cancel
     </button>
   </div>

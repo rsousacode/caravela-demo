@@ -18,6 +18,9 @@ defmodule CaravelaDemoWeb.Library.PublisherLive.Form do
 
   @impl true
   def mount(params, _session, socket) do
+    defaults = CaravelaDemoWeb.Library.PublisherLive.FormDomain.__caravela_live_state__()
+    socket = Caravela.Live.Template.__assign_defaults__(socket, defaults)
+
     context = build_context(socket)
     {entity, attrs} = load_initial(params, context)
     changeset = Library.change_publisher(entity, attrs)

@@ -2,10 +2,15 @@
 <script lang="ts">
   import type { Publisher } from '../types/library';
 
-  export let publisher: Publisher;
-  export let flash_message: string | null = null;
-
-  export let pushEvent: (event: string, payload: object) => void;
+  let {
+    publisher,
+    flash_message = null,
+    pushEvent
+  }: {
+    publisher: Publisher;
+    flash_message?: string | null;
+    pushEvent: (event: string, payload: object) => void;
+  } = $props();
 </script>
 
 {#if flash_message}
@@ -21,8 +26,8 @@
   </dl>
 
   <div class="actions">
-    <button on:click={() => pushEvent('edit', { id: publisher.id })}>Edit</button>
-    <button on:click={() => pushEvent('back', {})}>Back</button>
+    <button onclick={() => pushEvent('edit', { id: publisher.id })}>Edit</button>
+    <button onclick={() => pushEvent('back', {})}>Back</button>
   </div>
 </article>
 

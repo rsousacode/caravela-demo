@@ -5,6 +5,7 @@
   import FormsPanel from "./panels/FormsPanel.svelte";
   import LiveRuntimePanel from "./panels/LiveRuntimePanel.svelte";
   import TenancyPanel from "./panels/TenancyPanel.svelte";
+  import CrudPanel from "./panels/CrudPanel.svelte";
   import PlaceholderPanel from "./panels/PlaceholderPanel.svelte";
 
   let {
@@ -17,6 +18,7 @@
     form,
     liveRuntime,
     variants,
+    crud,
   } = $props();
 </script>
 
@@ -33,6 +35,8 @@
     <LiveRuntimePanel {panel} {live} {liveRuntime} />
   {:else if panel.id === "tenancy"}
     <TenancyPanel {panel} {variants} />
+  {:else if panel.id === "crud"}
+    <CrudPanel {panel} {crud} />
   {:else}
     <PlaceholderPanel {panel} />
   {/if}
