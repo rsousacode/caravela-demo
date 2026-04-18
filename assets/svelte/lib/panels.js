@@ -1,0 +1,60 @@
+export const PANELS = [
+  {
+    id: "domain",
+    label: "Domain",
+    hint: "Entities, fields, relations",
+    glyph: "◈",
+    accent: "wave-400",
+    status: "live",
+  },
+  {
+    id: "generators",
+    label: "Generators",
+    hint: "mix caravela.gen.*",
+    glyph: "⚙",
+    accent: "sail",
+    status: "live",
+  },
+  {
+    id: "flows",
+    label: "Flows",
+    hint: "Async orchestration",
+    glyph: "≋",
+    accent: "reef",
+    status: "live",
+  },
+  {
+    id: "forms",
+    label: "Forms",
+    hint: "Visibility + async validation",
+    glyph: "▤",
+    accent: "ember",
+    status: "soon",
+  },
+  {
+    id: "runtime",
+    label: "Live Runtime",
+    hint: "Updater pipelines",
+    glyph: "◎",
+    accent: "sand",
+    status: "soon",
+  },
+  {
+    id: "crud",
+    label: "CRUD",
+    hint: "Generated LiveViews",
+    glyph: "▦",
+    accent: "wave-300",
+    status: "soon",
+  },
+  {
+    id: "tenancy",
+    label: "Tenancy & Versions",
+    hint: "Multi-tenant, v1/v2",
+    glyph: "⎇",
+    accent: "coral",
+    status: "soon",
+  },
+];
+
+export const PANEL_BY_ID = Object.fromEntries(PANELS.map((p) => [p.id, p]));
