@@ -65,3 +65,7 @@ To rewrite schemas after editing [lib/caravela_demo/domains/library.ex](lib/cara
 mix caravela.gen.schema CaravelaDemo.Domains.Library --force
 mix ecto.reset
 ```
+
+## License
+
+MIT — see [LICENSE](LICENSE). Builds on [Caravela](https://github.com/rsousacode/caravela), which is licensed under MPL-2.0.
