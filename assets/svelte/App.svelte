@@ -9,6 +9,11 @@
     buildInfo = {},
     domain = undefined,
     generators = [],
+    flows = [],
+    flowSnapshot = {},
+    form = undefined,
+    liveRuntime = undefined,
+    variants = [],
     live = undefined,
   } = $props();
 
@@ -27,7 +32,17 @@
     <TerminalHeader panel={current} {buildInfo} />
 
     <main class="flex-1 min-h-0 overflow-hidden grid-fade">
-      <PanelRouter panel={current} {live} {domain} {generators} />
+      <PanelRouter
+        panel={current}
+        {live}
+        {domain}
+        {generators}
+        {flows}
+        {flowSnapshot}
+        {form}
+        {liveRuntime}
+        {variants}
+      />
     </main>
   </div>
 </div>

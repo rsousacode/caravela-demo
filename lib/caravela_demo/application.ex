@@ -9,6 +9,8 @@ defmodule CaravelaDemo.Application do
       CaravelaDemo.Repo,
       {Phoenix.PubSub, name: CaravelaDemo.PubSub},
       {Registry, keys: :unique, name: CaravelaDemo.FlowRegistry},
+      Caravela.Flow.Supervisor,
+      CaravelaDemo.FlowController,
       CaravelaDemoWeb.Endpoint
     ]
 

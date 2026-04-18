@@ -4,7 +4,7 @@ import "phoenix_html";
 import { Socket } from "phoenix";
 import { LiveSocket } from "phoenix_live_view";
 import { getHooks } from "live_svelte";
-import * as Components from "../svelte/index.js";
+import Components from "../svelte/index.js";
 
 const csrfToken = document
   .querySelector("meta[name='csrf-token']")

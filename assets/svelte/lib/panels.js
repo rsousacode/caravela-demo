@@ -29,7 +29,7 @@ export const PANELS = [
     hint: "Visibility + async validation",
     glyph: "▤",
     accent: "ember",
-    status: "soon",
+    status: "live",
   },
   {
     id: "runtime",
@@ -37,7 +37,7 @@ export const PANELS = [
     hint: "Updater pipelines",
     glyph: "◎",
     accent: "sand",
-    status: "soon",
+    status: "live",
   },
   {
     id: "crud",
@@ -53,7 +53,7 @@ export const PANELS = [
     hint: "Multi-tenant, v1/v2",
     glyph: "⎇",
     accent: "coral",
-    status: "soon",
+    status: "live",
   },
 ];
 

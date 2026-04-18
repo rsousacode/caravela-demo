@@ -1,72 +1,180 @@
 <script>
+  import { onMount } from "svelte";
   import PanelHeader from "../PanelHeader.svelte";
+  import FlowTree from "../flows/FlowTree.svelte";
+  import FlowStateTree from "../flows/FlowStateTree.svelte";
+  import FlowEventLog from "../flows/FlowEventLog.svelte";
+  import FlowSignalPanel from "../flows/FlowSignalPanel.svelte";
+  import { createFlowStore } from "$lib/flow_store.js";
 
-  let { panel } = $props();
+  let { panel, flows = [], flowSnapshot = {}, live = undefined } = $props();
 
-  const flows = [
-    { name: "DebounceFlow", desc: "Coalesce burst signals into one run after 500ms of silence", primitives: ["wait_until", "debounce", "run"], color: "reef" },
-    { name: "RetryFlow", desc: "Flaky HTTP call with exponential backoff and max retries", primitives: ["run", "retry", "backoff"], color: "ember" },
-    { name: "ParallelFlow", desc: "Three independent branches run concurrently; wait for all", primitives: ["parallel", "run"], color: "sail" },
-    { name: "RaceFlow", desc: "Three branches; first to complete wins, others are cancelled", primitives: ["race", "run"], color: "sand" },
-    { name: "BookSyncFlow", desc: "Canonical pattern: wait for dirty → debounce → sync → loop", primitives: ["wait_until", "debounce", "run", "repeat"], color: "wave-400" },
-  ];
+  const store = createFlowStore(flowSnapshot);
+  let selectedId = $state(flows[0]?.id ?? "debounce");
+
+  const selected = $derived(flows.find((f) => f.id === selectedId) ?? flows[0]);
+  const record = $derived(store.map.get(selectedId) ?? store.get(selectedId));
+
+  const status = $derived(record?.status ?? "idle");
+  const currentStep = $derived(record?.state?.__step ?? null);
+  const isRunning = $derived(status === "running");
+
+  const STATUS_STYLE = {
+    idle: { text: "idle", class: "text-ink-500 border-ink-700" },
+    running: { text: "running", class: "text-reef border-reef/40" },
+    done: { text: "done", class: "text-wave-400 border-wave-400/40" },
+    error: { text: "error", class: "text-coral border-coral/40" },
+    stopped: { text: "stopped", class: "text-ink-500 border-ink-700" },
+  };
+
+  onMount(() => {
+    if (!live) return;
+
+    const handler = (payload) => {
+      store.apply(payload);
+    };
+
+    const off = live.handleEvent("flow:update", handler);
+    return () => (typeof off === "function" ? off() : undefined);
+  });
+
+  function pushEv(name, data) {
+    live?.pushEvent(name, data);
+  }
+
+  function start() {
+    if (!selected) return;
+    pushEv("flow:start", { flow_id: selected.id });
+  }
+
+  function stop() {
+    if (!selected) return;
+    pushEv("flow:stop", { flow_id: selected.id });
+  }
+
+  function signal(signalId) {
+    if (!selected) return;
+    pushEv("flow:signal", { flow_id: selected.id, signal_id: signalId });
+  }
+
+  function statusFor(id) {
+    return store.map.get(id)?.status ?? store.get(id).status ?? "idle";
+  }
 </script>
 
 <div class="h-full flex flex-col">
   <PanelHeader
     {panel}
-    subtitle="Flows are composable async state machines built on GenServer. Start one, send it signals, watch its state tick in real time. The showpiece panel — interactive simulation lands in Phase 4."
+    subtitle="Flows are composable async state machines built on GenServer. Start one, send it signals, watch state tick in real time. Every step update streams over the LiveView socket — no polling."
   />
 
-  <div class="flex-1 overflow-auto p-8 grid grid-cols-12 gap-6">
-    <section class="col-span-8 space-y-3">
-      <h2 class="text-xs uppercase tracking-widest text-ink-500 mb-3">Flow catalog</h2>
-      {#each flows as flow}
-        <div
-          class="rounded-xl border border-ink-700/80 bg-ink-900/60 p-5 hover:border-{flow.color}/50 transition-colors group"
-        >
-          <div class="flex items-start justify-between gap-4">
-            <div class="flex-1 min-w-0">
-              <div class="flex items-center gap-2">
-                <span class="h-2 w-2 rounded-full bg-{flow.color}"></span>
-                <h3 class="text-ink-50 font-medium">{flow.name}</h3>
-              </div>
-              <p class="text-sm text-ink-400 mt-1.5 leading-relaxed">{flow.desc}</p>
-              <div class="flex flex-wrap gap-1.5 mt-3">
-                {#each flow.primitives as p}
-                  <code
-                    class="text-[11px] text-ink-300 bg-ink-800/80 border border-ink-700 rounded px-1.5 py-0.5"
-                    >{p}</code
-                  >
-                {/each}
-              </div>
+  <div class="flex-1 min-h-0 grid grid-cols-12 gap-0">
+    <aside
+      class="col-span-3 border-r border-ink-700/60 bg-ink-900/40 flex flex-col min-h-0"
+    >
+      <div
+        class="px-4 py-3 border-b border-ink-700/60 text-xs uppercase tracking-widest text-ink-500"
+      >
+        Catalog · {flows.length}
+      </div>
+      <nav class="flex-1 overflow-auto py-2 px-2 space-y-1.5">
+        {#each flows as f (f.id)}
+          {@const st = statusFor(f.id)}
+          {@const style = STATUS_STYLE[st] ?? STATUS_STYLE.idle}
+          {@const active = f.id === selectedId}
+          <button
+            type="button"
+            onclick={() => (selectedId = f.id)}
+            class="w-full text-left p-3 rounded-lg border transition-all
+                   {active
+              ? `border-${f.accent}/60 bg-ink-800/80 ring-1 ring-${f.accent}/30`
+              : 'border-ink-700/70 hover:border-ink-600 bg-ink-900/40'}"
+          >
+            <div class="flex items-center justify-between mb-1">
+              <span
+                class="text-[13px] font-medium {active
+                  ? `text-${f.accent}`
+                  : 'text-ink-100'}"
+              >
+                {f.title}
+              </span>
+              <span
+                class="text-[10px] uppercase tracking-widest border rounded-full px-1.5 py-px {style.class}"
+              >
+                {style.text}
+              </span>
             </div>
-            <button
-              disabled
-              class="shrink-0 text-[12px] text-ink-500 border border-ink-700 rounded-lg px-3 py-1.5"
-            >
-              start ▷
-            </button>
+            <div class="text-[11px] text-ink-400 line-clamp-2 mb-2">
+              {f.description}
+            </div>
+            <div class="flex flex-wrap gap-1">
+              {#each f.primitives as p}
+                <code
+                  class="text-[10px] text-ink-400 bg-ink-800/80 border border-ink-700 rounded px-1 py-px"
+                >
+                  {p}
+                </code>
+              {/each}
+            </div>
+          </button>
+        {/each}
+      </nav>
+    </aside>
+
+    <section class="col-span-6 flex flex-col min-h-0 border-r border-ink-700/60">
+      {#if selected}
+        <div class="px-6 py-4 border-b border-ink-700/60 flex items-center gap-3">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-baseline gap-3">
+              <h2 class="text-[15px] font-semibold text-{selected.accent}">
+                {selected.title}
+              </h2>
+              <code class="text-[11px] text-ink-500 truncate">
+                {selected.module} · {selected.flow_name}
+              </code>
+            </div>
+            <p class="text-[12px] text-ink-400 mt-1">{selected.description}</p>
+          </div>
+          <div class="flex items-center gap-2">
+            {#if isRunning}
+              <button
+                onclick={stop}
+                class="px-3 py-1.5 text-[12px] border border-coral/40 text-coral rounded-lg hover:bg-coral/10"
+              >
+                ■ stop
+              </button>
+            {:else}
+              <button
+                onclick={start}
+                class="px-3 py-1.5 text-[12px] border border-{selected.accent}/50 text-{selected.accent} rounded-lg hover:bg-{selected.accent}/10"
+              >
+                ▷ start
+              </button>
+            {/if}
           </div>
         </div>
-      {/each}
+
+        <div class="flex-1 min-h-0 overflow-auto p-5 space-y-4">
+          <FlowTree tree={selected.tree} {currentStep} {status} />
+          <FlowSignalPanel
+            flow={selected}
+            {status}
+            accent={selected.accent}
+            onSignal={signal}
+          />
+        </div>
+      {:else}
+        <div class="flex-1 grid place-items-center text-ink-500">no flow selected</div>
+      {/if}
     </section>
 
-    <section class="col-span-4 space-y-3">
-      <h2 class="text-xs uppercase tracking-widest text-ink-500 mb-3">Live state</h2>
-      <div
-        class="rounded-xl border border-ink-700/80 bg-ink-900/60 p-5 h-64 grid place-items-center"
-      >
-        <div class="text-center space-y-2">
-          <div class="text-4xl text-ink-700">≋</div>
-          <div class="text-ink-400 text-sm">No flow running</div>
-          <div class="text-ink-600 text-[11px]">Phase 4 wires this panel to Caravela.Flow</div>
-        </div>
+    <aside class="col-span-3 flex flex-col min-h-0 p-4 gap-4">
+      <div class="flex-1 min-h-0">
+        <FlowStateTree state={record?.state} />
       </div>
-      <div class="rounded-xl border border-ink-700/80 bg-ink-900/60 p-5 space-y-2">
-        <div class="text-xs uppercase tracking-widest text-ink-500">Event log</div>
-        <div class="text-ink-600 text-[12px] font-mono">waiting for first signal…</div>
+      <div class="flex-1 min-h-0">
+        <FlowEventLog log={record?.log ?? []} />
       </div>
-    </section>
+    </aside>
   </div>
 </div>
