@@ -8,6 +8,8 @@ defmodule CaravelaDemo.Library do
   Custom code placed below the `# --- CUSTOM ---` marker is preserved.
   """
 
+  import Ecto.Query, only: [preload: 2]
+
   alias CaravelaDemo.Repo
   alias CaravelaDemo.Library.Author
   alias CaravelaDemo.Library.Book
@@ -63,11 +65,27 @@ defmodule CaravelaDemo.Library do
     end
   end
 
-  @doc "Delete a `author`: authorize, run on_delete hook, delete."
-  def delete_author(%Author{} = author, context \\ %{}) do
+  @doc """
+  Delete a `author`: authorize, run on_delete hook, delete.
+
+  Accepts either the loaded struct (skipping the read round-trip) or
+  the primary-key id (one `get` + one `delete`). Returns
+  `{:error, :not_found}` when called by id and the row is invisible
+  or missing.
+  """
+  def delete_author(struct_or_id, context \\ %{})
+
+  def delete_author(%Author{} = author, context) do
     with :ok <- authorize_delete(:authors, author, context),
          :ok <- run_delete_hook(:authors, author, context) do
       Repo.delete(author)
+    end
+  end
+
+  def delete_author(id, context) when is_binary(id) or is_integer(id) do
+    case get_author(id, context) do
+      nil -> {:error, :not_found}
+      entity -> delete_author(entity, context)
     end
   end
 
@@ -76,6 +94,7 @@ defmodule CaravelaDemo.Library do
     Book
     |> scope_tenant(context)
     |> apply_read_permission(:books, context)
+    |> preload([:author, :publisher])
     |> Repo.all()
   end
 
@@ -84,6 +103,7 @@ defmodule CaravelaDemo.Library do
     Book
     |> scope_tenant(context)
     |> apply_read_permission(:books, context)
+    |> preload([:author, :publisher])
     |> Repo.get(id)
   end
 
@@ -92,6 +112,7 @@ defmodule CaravelaDemo.Library do
     Book
     |> scope_tenant(context)
     |> apply_read_permission(:books, context)
+    |> preload([:author, :publisher])
     |> Repo.get!(id)
   end
 
@@ -121,11 +142,27 @@ defmodule CaravelaDemo.Library do
     end
   end
 
-  @doc "Delete a `book`: authorize, run on_delete hook, delete."
-  def delete_book(%Book{} = book, context \\ %{}) do
+  @doc """
+  Delete a `book`: authorize, run on_delete hook, delete.
+
+  Accepts either the loaded struct (skipping the read round-trip) or
+  the primary-key id (one `get` + one `delete`). Returns
+  `{:error, :not_found}` when called by id and the row is invisible
+  or missing.
+  """
+  def delete_book(struct_or_id, context \\ %{})
+
+  def delete_book(%Book{} = book, context) do
     with :ok <- authorize_delete(:books, book, context),
          :ok <- run_delete_hook(:books, book, context) do
       Repo.delete(book)
+    end
+  end
+
+  def delete_book(id, context) when is_binary(id) or is_integer(id) do
+    case get_book(id, context) do
+      nil -> {:error, :not_found}
+      entity -> delete_book(entity, context)
     end
   end
 
@@ -179,11 +216,27 @@ defmodule CaravelaDemo.Library do
     end
   end
 
-  @doc "Delete a `publisher`: authorize, run on_delete hook, delete."
-  def delete_publisher(%Publisher{} = publisher, context \\ %{}) do
+  @doc """
+  Delete a `publisher`: authorize, run on_delete hook, delete.
+
+  Accepts either the loaded struct (skipping the read round-trip) or
+  the primary-key id (one `get` + one `delete`). Returns
+  `{:error, :not_found}` when called by id and the row is invisible
+  or missing.
+  """
+  def delete_publisher(struct_or_id, context \\ %{})
+
+  def delete_publisher(%Publisher{} = publisher, context) do
     with :ok <- authorize_delete(:publishers, publisher, context),
          :ok <- run_delete_hook(:publishers, publisher, context) do
       Repo.delete(publisher)
+    end
+  end
+
+  def delete_publisher(id, context) when is_binary(id) or is_integer(id) do
+    case get_publisher(id, context) do
+      nil -> {:error, :not_found}
+      entity -> delete_publisher(entity, context)
     end
   end
 

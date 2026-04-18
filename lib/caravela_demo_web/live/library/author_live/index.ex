@@ -32,24 +32,21 @@ defmodule CaravelaDemoWeb.Library.AuthorLive.Index do
   def handle_event("delete", %{"id" => id}, socket) do
     context = socket.assigns.context
 
-    case Library.get_author(id, context) do
-      nil ->
+    case Library.delete_author(id, context) do
+      {:ok, _} ->
+        {:noreply,
+         socket
+         |> assign(:flash_message, "Deleted")
+         |> assign(:authors, Library.list_authors(context))}
+
+      {:error, :not_found} ->
         {:noreply, assign(socket, :flash_message, "Not found")}
 
-      entity ->
-        case Library.delete_author(entity, context) do
-          {:ok, _} ->
-            {:noreply,
-             socket
-             |> assign(:flash_message, "Deleted")
-             |> assign(:authors, Library.list_authors(context))}
+      {:error, :unauthorized} ->
+        {:noreply, assign(socket, :flash_message, "Not authorized")}
 
-          {:error, :unauthorized} ->
-            {:noreply, assign(socket, :flash_message, "Not authorized")}
-
-          {:error, reason} ->
-            {:noreply, assign(socket, :flash_message, "Error: " <> inspect(reason))}
-        end
+      {:error, reason} ->
+        {:noreply, assign(socket, :flash_message, "Error: " <> inspect(reason))}
     end
   end
 
@@ -64,13 +61,14 @@ defmodule CaravelaDemoWeb.Library.AuthorLive.Index do
   @impl true
   def render(assigns) do
     ~H"""
-    <LiveSvelte.render
+    <LiveSvelte.svelte
       name="library/AuthorIndex"
       props={%{
         authors: @authors,
         loading: @loading,
         flash_message: @flash_message
       }}
+      socket={@socket}
     />
     """
   end

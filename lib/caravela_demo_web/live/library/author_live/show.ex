@@ -46,12 +46,13 @@ defmodule CaravelaDemoWeb.Library.AuthorLive.Show do
   @impl true
   def render(assigns) do
     ~H"""
-    <LiveSvelte.render
+    <LiveSvelte.svelte
       name="library/AuthorShow"
       props={%{
         author: @author,
         flash_message: @flash_message
       }}
+      socket={@socket}
     />
     """
   end

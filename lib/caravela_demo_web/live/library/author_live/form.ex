@@ -29,13 +29,13 @@ defmodule CaravelaDemoWeb.Library.AuthorLive.Form do
     {:ok,
      socket
      |> assign(:context, context)
-     |> apply_updater(:load, {entity, attrs, errors})}
+     |> apply_updater(:load, entity: entity, attrs: attrs, errors: errors)}
   end
 
   @impl true
   def handle_event("validate", %{"field" => field, "value" => value}, socket) do
     key = String.to_existing_atom(field)
-    socket = apply_updater(socket, :put_attr, {key, value})
+    socket = apply_updater(socket, :put_attr, field: key, value: value)
 
     changeset =
       socket.assigns.book
@@ -78,7 +78,7 @@ defmodule CaravelaDemoWeb.Library.AuthorLive.Form do
   @impl true
   def render(assigns) do
     ~H"""
-    <LiveSvelte.render
+    <LiveSvelte.svelte
       name="library/AuthorForm"
       props={%{
         author: @attrs,
@@ -86,6 +86,7 @@ defmodule CaravelaDemoWeb.Library.AuthorLive.Form do
         saving: @saving,
         flash_message: @flash_message
       }}
+      socket={@socket}
     />
     """
   end
@@ -95,11 +96,23 @@ defmodule CaravelaDemoWeb.Library.AuthorLive.Form do
   defp load_initial(%{"id" => id}, context) do
     case Library.get_author(id, context) do
       nil -> {%Author{}, %{}}
-      entity -> {entity, Map.from_struct(entity) |> Map.drop([:__meta__])}
+      entity -> {entity, entity_attrs(entity)}
     end
   end
 
   defp load_initial(_params, _context), do: {%Author{}, %{}}
+
+  # Narrow the attrs map to the declared entity fields and normalise
+  # struct values to wire-friendly primitives so the Svelte form inputs
+  # don't receive `%Decimal{}` / `%DateTime{}` dumps.
+  defp entity_attrs(entity) do
+    [:name, :bio, :born]
+    |> Enum.reduce(%{}, fn field, acc ->
+      Map.put(acc, field, normalise_attr(Map.get(entity, field)))
+    end)
+  end
+
+  defp normalise_attr(other), do: other
 
   defp new?(%Author{id: nil}), do: true
   defp new?(%Author{}), do: false
