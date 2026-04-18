@@ -9,20 +9,28 @@ defmodule CaravelaDemo.MixProject do
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       aliases: aliases(),
+      releases: releases(),
       listeners: [Phoenix.CodeReloader]
     ]
   end
 
   def application do
     [
-      extra_applications: [:logger],
+      extra_applications: [:logger, :runtime_tools],
       mod: {CaravelaDemo.Application, []}
     ]
   end
 
+  defp caravela_dep do
+    case System.get_env("CARAVELA_PATH") do
+      nil -> {:caravela, "~> 0.5.3"}
+      path -> {:caravela, path: path}
+    end
+  end
+
   defp deps do
     [
-      {:caravela, path: "../caravela"},
+      caravela_dep(),
       {:ecto_sql, "~> 3.11"},
       {:postgrex, "~> 0.18"},
       {:jason, "~> 1.4"},
@@ -45,6 +53,16 @@ defmodule CaravelaDemo.MixProject do
       "assets.setup": ["cmd --cd assets npm install"],
       "assets.build": ["cmd --cd assets npm run build"],
       "assets.deploy": ["cmd --cd assets npm run build", "phx.digest"]
+    ]
+  end
+
+  defp releases do
+    [
+      caravela_demo: [
+        include_executables_for: [:unix],
+        applications: [runtime_tools: :permanent],
+        steps: [:assemble, :tar]
+      ]
     ]
   end
 end

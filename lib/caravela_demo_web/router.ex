@@ -10,6 +10,17 @@ defmodule CaravelaDemoWeb.Router do
     plug :put_secure_browser_headers
   end
 
+  pipeline :api do
+    plug :accepts, ["json", "text"]
+  end
+
+  scope "/", CaravelaDemoWeb do
+    pipe_through :api
+
+    get "/health/live", HealthController, :live
+    get "/health/ready", HealthController, :ready
+  end
+
   scope "/", CaravelaDemoWeb do
     pipe_through :browser
 

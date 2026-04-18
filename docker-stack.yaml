@@ -1,0 +1,160 @@
+# Docker Swarm stack for the Caravela Command Center demo.
+#
+# Deploy with:
+#   docker stack deploy -c docker-stack.yaml caravela-demo
+#
+# This file is safe to commit — it contains no secrets, only references to
+# them. Before the first deploy, create the secrets on the swarm:
+#
+#   printf '%s' "$(openssl rand -hex 64)"              | docker secret create caravela_demo_secret_key_base -
+#   printf '%s' 'ecto://app:APP_PASSWORD@postgres/caravela_demo_prod' | docker secret create caravela_demo_database_url -
+#   printf '%s' 'APP_PASSWORD'                         | docker secret create caravela_demo_postgres_password -
+#
+# …and set PHX_HOST and IMAGE_TAG in the deploying shell:
+#
+#   export IMAGE=ghcr.io/rsousacode/caravela-demo:latest
+#   export PHX_HOST=demo.example.com
+#
+# See README.md > "Production deployment" for the full walkthrough.
+
+version: "3.9"
+
+x-app-env: &app-env
+  PHX_SERVER: "true"
+  PHX_HOST: "${PHX_HOST:?PHX_HOST must be set (public hostname, e.g. demo.example.com)}"
+  PHX_SCHEME: "${PHX_SCHEME:-https}"
+  PORT: "4000"
+  POOL_SIZE: "10"
+  LOG_LEVEL: "info"
+  DATABASE_SSL: "${DATABASE_SSL:-false}"
+  # *_FILE variants are read by config/runtime.exs and resolved via docker secrets.
+  DATABASE_URL_FILE: "/run/secrets/database_url"
+  SECRET_KEY_BASE_FILE: "/run/secrets/secret_key_base"
+
+services:
+  app:
+    image: "${IMAGE:?IMAGE must be set, e.g. ghcr.io/rsousacode/caravela-demo:latest}"
+    environment: *app-env
+    secrets:
+      - source: caravela_demo_database_url
+        target: database_url
+      - source: caravela_demo_secret_key_base
+        target: secret_key_base
+    ports:
+      # Expose on the overlay so an external reverse proxy (Traefik, Caddy,
+      # Nginx) can terminate TLS and forward to this port. Remove `published`
+      # if you front the app with Traefik inside the same swarm.
+      - target: 4000
+        published: "${APP_PORT:-4000}"
+        protocol: tcp
+        mode: ingress
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:4000/health/live || exit 1"]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+      start_period: 30s
+    depends_on:
+      - postgres
+    networks:
+      - caravela_net
+    deploy:
+      replicas: ${APP_REPLICAS:-1}
+      update_config:
+        parallelism: 1
+        order: start-first
+        failure_action: rollback
+        monitor: 30s
+      rollback_config:
+        parallelism: 1
+        order: stop-first
+      restart_policy:
+        condition: any
+        delay: 5s
+        max_attempts: 5
+        window: 120s
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 128M
+      # Uncomment to expose through an in-swarm Traefik instead of a published port.
+      # labels:
+      #   - "traefik.enable=true"
+      #   - "traefik.http.routers.caravela.rule=Host(`${PHX_HOST}`)"
+      #   - "traefik.http.routers.caravela.entrypoints=websecure"
+      #   - "traefik.http.routers.caravela.tls.certresolver=le"
+      #   - "traefik.http.services.caravela.loadbalancer.server.port=4000"
+      #   - "traefik.http.services.caravela.loadbalancer.healthcheck.path=/health/live"
+
+  # One-shot migration runner. `deploy.replicas: 0` would prevent it from
+  # running automatically — instead we let it run to completion and restart-only-on-failure.
+  # Run manually after each deploy:  docker service logs caravela-demo_migrate -f
+  migrate:
+    image: "${IMAGE:?IMAGE must be set}"
+    command: ["/app/bin/migrate"]
+    environment: *app-env
+    secrets:
+      - source: caravela_demo_database_url
+        target: database_url
+      - source: caravela_demo_secret_key_base
+        target: secret_key_base
+    depends_on:
+      - postgres
+    networks:
+      - caravela_net
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: "${POSTGRES_USER:-app}"
+      POSTGRES_DB: "${POSTGRES_DB:-caravela_demo_prod}"
+      POSTGRES_PASSWORD_FILE: "/run/secrets/postgres_password"
+    secrets:
+      - source: caravela_demo_postgres_password
+        target: postgres_password
+    volumes:
+      - caravela_demo_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-app}"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 20s
+    networks:
+      - caravela_net
+    deploy:
+      replicas: 1
+      placement:
+        # Pin the DB to a single node so the volume stays with it.
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: any
+        delay: 10s
+      resources:
+        limits:
+          memory: 512M
+
+networks:
+  caravela_net:
+    driver: overlay
+    attachable: true
+
+volumes:
+  caravela_demo_pgdata:
+
+secrets:
+  caravela_demo_database_url:
+    external: true
+  caravela_demo_secret_key_base:
+    external: true
+  caravela_demo_postgres_password:
+    external: true

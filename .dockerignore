@@ -1,0 +1,33 @@
+# Build artefacts that get re-generated inside the image
+_build
+deps
+cover
+doc
+.fetch
+*.ez
+erl_crash.dump
+
+# Dev-only node and editor state
+assets/node_modules
+.elixir_ls
+
+# Local ecosystem junk we never want in the build context
+.git
+.github
+.DS_Store
+tmp
+
+# Secrets / configs that should never leak into an image
+.env
+.env.*
+*.pem
+*.key
+priv/static/assets
+
+# Docs / markdown — the image doesn't need these
+*.md
+LICENSE
+
+# Orchestration files (not needed inside the built image)
+docker-compose.yaml
+docker-stack.yaml

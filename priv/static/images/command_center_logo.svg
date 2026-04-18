@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 240" role="img" aria-label="Caravela Command Center">
+  <title>Caravela Command Center</title>
+  <defs>
+    <linearGradient id="cc-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b1220"/>
+      <stop offset="1" stop-color="#111827"/>
+    </linearGradient>
+    <linearGradient id="cc-accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#38bdf8"/>
+      <stop offset=".5" stop-color="#a78bfa"/>
+      <stop offset="1" stop-color="#f472b6"/>
+    </linearGradient>
+    <linearGradient id="cc-sail" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fde68a"/>
+      <stop offset="1" stop-color="#f59e0b"/>
+    </linearGradient>
+    <radialGradient id="cc-scope" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#0ea5e9" stop-opacity=".25"/>
+      <stop offset="1" stop-color="#0ea5e9" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="cc-glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- backdrop -->
+  <rect width="960" height="240" rx="24" fill="url(#cc-bg)"/>
+
+  <!-- subtle grid -->
+  <g stroke="#1f2937" stroke-width="1" opacity=".6">
+    <path d="M0 60H960M0 120H960M0 180H960"/>
+    <path d="M120 0V240M240 0V240M360 0V240M480 0V240M600 0V240M720 0V240M840 0V240"/>
+  </g>
+
+  <!-- radar scope -->
+  <g transform="translate(120 120)">
+    <circle r="96" fill="url(#cc-scope)"/>
+    <circle r="96" fill="none" stroke="#22d3ee" stroke-width="1.5" opacity=".7"/>
+    <circle r="72" fill="none" stroke="#22d3ee" stroke-width="1" opacity=".45"/>
+    <circle r="48" fill="none" stroke="#22d3ee" stroke-width="1" opacity=".35"/>
+    <circle r="24" fill="none" stroke="#22d3ee" stroke-width="1" opacity=".3"/>
+    <path d="M-96 0H96M0 -96V96" stroke="#22d3ee" stroke-width="1" opacity=".4"/>
+    <!-- sweep -->
+    <path d="M0 0 L96 0 A96 96 0 0 0 68 -68 Z" fill="#22d3ee" opacity=".18"/>
+
+    <!-- caravela silhouette -->
+    <g filter="url(#cc-glow)">
+      <!-- hull -->
+      <path d="M-46 28 L46 28 L36 46 L-36 46 Z" fill="#e2e8f0"/>
+      <!-- mast -->
+      <rect x="-1.5" y="-56" width="3" height="82" fill="#e2e8f0"/>
+      <!-- main sail -->
+      <path d="M2 -52 L34 -12 L2 -12 Z" fill="url(#cc-sail)"/>
+      <!-- fore sail -->
+      <path d="M-2 -40 L-28 -8 L-2 -8 Z" fill="url(#cc-sail)" opacity=".9"/>
+      <!-- pennant -->
+      <path d="M2 -56 L24 -50 L2 -44 Z" fill="#f472b6"/>
+    </g>
+
+    <!-- blip -->
+    <circle cx="54" cy="-28" r="3" fill="#f472b6"/>
+    <circle cx="54" cy="-28" r="7" fill="none" stroke="#f472b6" stroke-width="1" opacity=".5"/>
+  </g>
+
+  <!-- wordmark -->
+  <g font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+    <!-- tagline top -->
+    <text x="256" y="74" font-size="14" letter-spacing="8" fill="#64748b">DEMO</text>
+
+    <!-- Command Center wordmark -->
+    <text x="256" y="132" font-size="56" font-weight="800" fill="#f8fafc" letter-spacing="1">COMMAND</text>
+    <text x="256" y="190" font-size="56" font-weight="800" fill="url(#cc-accent)" letter-spacing="1">CENTER</text>
+
+    <!-- status ticker -->
+    <g transform="translate(700 108)" font-size="13" letter-spacing="3" fill="#94a3b8">
+      <circle cx="0" cy="-32" r="4" fill="#22c55e"/>
+      <text x="14" y="-28">DOMAIN</text>
+      <circle cx="0" cy="0" r="4" fill="#a78bfa"/>
+      <text x="14" y="4">GENERATOR</text>
+      <circle cx="0" cy="32" r="4" fill="#38bdf8"/>
+      <text x="14" y="36">FLOWS</text>
+    </g>
+  </g>
+
+  <!-- corner bracket -->
+  <g stroke="#334155" stroke-width="2" fill="none">
+    <path d="M16 40 V16 H40"/>
+    <path d="M944 40 V16 H920"/>
+    <path d="M16 200 V224 H40"/>
+    <path d="M944 200 V224 H920"/>
+  </g>
+</svg>
