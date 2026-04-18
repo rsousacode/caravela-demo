@@ -11,7 +11,7 @@ defmodule CaravelaDemoWeb.CommandCenterLive do
 
   import LiveSvelte
 
-  alias CaravelaDemoWeb.DomainSerializer
+  alias CaravelaDemoWeb.{DomainSerializer, GeneratorRunner}
 
   @panels ~w(domain generators flows forms runtime crud tenancy)
   @domain_module CaravelaDemo.Domains.Library
@@ -26,6 +26,7 @@ defmodule CaravelaDemoWeb.CommandCenterLive do
       |> assign(:panels, @panels)
       |> assign(:build_info, build_info())
       |> assign(:domain, load_domain())
+      |> assign(:generators, load_generators())
 
     {:ok, socket}
   end
@@ -47,7 +48,8 @@ defmodule CaravelaDemoWeb.CommandCenterLive do
           activePanel: @active_panel,
           panels: @panels,
           buildInfo: @build_info,
-          domain: @domain
+          domain: @domain,
+          generators: @generators
         }
       }
       socket={@socket}
@@ -59,6 +61,21 @@ defmodule CaravelaDemoWeb.CommandCenterLive do
     ir = DomainSerializer.serialize(Caravela.domain!(@domain_module))
     source = read_source(@domain_source_path)
     Map.put(ir, :source, source)
+  end
+
+  defp load_generators do
+    gens = GeneratorRunner.run_all(@domain_module)
+    snapshots = CaravelaDemoWeb.GeneratorSnapshot.load_all()
+
+    Enum.map(gens, fn g ->
+      baseline = Map.get(snapshots, g.id, [])
+      diff = CaravelaDemoWeb.GeneratorDiff.compare(baseline, g.files)
+      baseline_map = Map.new(baseline, fn f -> {f.path, f.content} end)
+
+      g
+      |> Map.put(:diff, diff)
+      |> Map.put(:baseline_map, baseline_map)
+    end)
   end
 
   defp read_source(relative) do

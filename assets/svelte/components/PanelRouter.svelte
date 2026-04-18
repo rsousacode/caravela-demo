@@ -4,14 +4,14 @@
   import FlowsPanel from "./panels/FlowsPanel.svelte";
   import PlaceholderPanel from "./panels/PlaceholderPanel.svelte";
 
-  let { panel, live } = $props();
+  let { panel, live, domain, generators } = $props();
 </script>
 
 <div class="h-full w-full overflow-hidden">
   {#if panel.id === "domain"}
-    <DomainPanel {panel} {live} />
+    <DomainPanel {panel} {live} {domain} />
   {:else if panel.id === "generators"}
-    <GeneratorsPanel {panel} {live} />
+    <GeneratorsPanel {panel} {live} {generators} />
   {:else if panel.id === "flows"}
     <FlowsPanel {panel} {live} />
   {:else}

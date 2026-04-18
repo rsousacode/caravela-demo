@@ -71,10 +71,10 @@ defmodule CaravelaDemoWeb.DomainSerializer do
   end
 
   defp render_opt(nil), do: nil
-  defp render_opt(v) when is_binary(v), do: v
-  defp render_opt(v) when is_atom(v), do: to_string(v)
-  defp render_opt(v) when is_number(v), do: v
   defp render_opt(v) when is_boolean(v), do: v
+  defp render_opt(v) when is_binary(v), do: v
+  defp render_opt(v) when is_number(v), do: v
+  defp render_opt(v) when is_atom(v), do: to_string(v)
   defp render_opt(%Regex{} = r), do: inspect(r)
   defp render_opt(v), do: inspect(v)
 end

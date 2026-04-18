@@ -4,7 +4,13 @@
   import PanelRouter from "./components/PanelRouter.svelte";
   import { PANEL_BY_ID } from "$lib/panels.js";
 
-  let { activePanel = "domain", panels = [], buildInfo = {}, live = undefined } = $props();
+  let {
+    activePanel = "domain",
+    buildInfo = {},
+    domain = undefined,
+    generators = [],
+    live = undefined,
+  } = $props();
 
   const current = $derived(PANEL_BY_ID[activePanel] ?? PANEL_BY_ID.domain);
 
@@ -21,7 +27,7 @@
     <TerminalHeader panel={current} {buildInfo} />
 
     <main class="flex-1 min-h-0 overflow-hidden grid-fade">
-      <PanelRouter panel={current} {live} />
+      <PanelRouter panel={current} {live} {domain} {generators} />
     </main>
   </div>
 </div>
